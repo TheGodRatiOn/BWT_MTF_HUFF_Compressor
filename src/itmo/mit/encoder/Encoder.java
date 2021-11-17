@@ -69,15 +69,6 @@ public class Encoder {
         return sb.toString();
     }
 
-    public static byte[] trim(byte[] bytes) {
-        int i = bytes.length - 1;
-        while (i >= 0 && bytes[i] == 0) {
-            --i;
-        }
-
-        return Arrays.copyOf(bytes, i + 1);
-    }
-
     public static int getPowerOf2(int power) {
         int result = 1;
 
@@ -224,7 +215,7 @@ public class Encoder {
             System.out.println("Wrong number of file path arguments");
         }
 
-        String inPath = "";
+        String inPath = args[0];
         String outPath = args[1];
 
         try {FileInputStream is = new FileInputStream(new File(inPath));
