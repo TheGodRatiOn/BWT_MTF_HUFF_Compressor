@@ -38,7 +38,7 @@ public class Huffman {
             queue.add(new HuffmanLeaf(i, appearances[i]));
         }
         while (queue.size() > 1) {
-            queue.add(new HuffmanNode(queue.poll(), queue.poll()));
+            queue.add(new HuffmanNode(queue.poll(), Objects.requireNonNull(queue.poll())));
         }
         this.root = queue.poll();
         generateHuffmanCode(this.root, "");
@@ -58,8 +58,8 @@ public class Huffman {
         generateHuffmanCode(huffmanNode.getRightNode(), code.concat("1"));
     }
 
-    public void generateAnotherHuffmanCode(HuffmanNode huffmanNode, String code){
-        if (huffmanNode.getFrequency() > -1){
+    public void generateAnotherHuffmanCode(HuffmanNode huffmanNode, String code) {
+        if (huffmanNode.getFrequency() > -1) {
             int number = huffmanNode.getFrequency();
             this.huffmanCodes.put(number, code);
             return;
@@ -95,7 +95,7 @@ public class Huffman {
         return order;
     }
 
-    public Map<Integer, String> getHuffmanCodes(){
+    public Map<Integer, String> getHuffmanCodes() {
         return this.huffmanCodes;
     }
 }

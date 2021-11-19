@@ -6,31 +6,38 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static itmo.mit.encoder.BoundaryIndex.quickStringSort;
+
 
 public class Encoder {
     private static BWTResult BWT(String inputString) {
-        if (!inputString.isEmpty()){
-            List<String> strings = new ArrayList<>();
-            String buffer = inputString;
-            strings.add(inputString);
+        if (!inputString.isEmpty()) {
+            String doubleInput = inputString.concat(inputString);
             String result;
+            List<BoundaryIndex> boundaryIndices = new ArrayList<>();
 
-            int i = 0;
-            while (i < inputString.length() - 1) {
-                buffer = buffer.charAt(buffer.length() - 1) + buffer.substring(0, buffer.length() - 1);
-                strings.add(buffer);
-                i++;
+            for (int i = 0; i < inputString.length(); i++) {
+                boundaryIndices.add(new BoundaryIndex(i, i + inputString.length()));
             }
 
-            Collections.sort(strings);
+            quickStringSort(boundaryIndices, doubleInput, 0, boundaryIndices.size() - 1);
+
+            int resultIndex = 0;
+            for (int i = 0; i < boundaryIndices.size(); i++) {
+                if (doubleInput.substring(boundaryIndices.get(i).getBegin(),
+                        boundaryIndices.get(i).getEnd()).equals(inputString)) {
+                    resultIndex = i;
+                    break;
+                }
+            }
 
             StringBuilder stringBuilder = new StringBuilder();
-            for (String string : strings) {
-                stringBuilder.append(string.charAt(string.length() - 1));
+            for (BoundaryIndex b : boundaryIndices) {
+                stringBuilder.append(doubleInput.charAt(b.getEnd() - 1));
             }
             result = stringBuilder.toString();
 
-            return new BWTResult(result, strings.indexOf(inputString));
+            return new BWTResult(result, resultIndex);
         }
         return null;
     }
@@ -159,7 +166,7 @@ public class Encoder {
         char[] about = new char[bitList.length / 8];
 
         for (int i = 0; i < about.length; i++) {
-            about[i] = (char)(getShortFromBitOctet(Arrays.copyOfRange(bitList, i * 8, i * 8 + 8)));
+            about[i] = (char) (getShortFromBitOctet(Arrays.copyOfRange(bitList, i * 8, i * 8 + 8)));
         }
 
         return about;
@@ -185,7 +192,7 @@ public class Encoder {
         return result;
     }
 
-    private static boolean[] concatenateBoolArrays(boolean[] first, boolean[] second){
+    private static boolean[] concatenateBoolArrays(boolean[] first, boolean[] second) {
         boolean[] result = new boolean[first.length + second.length];
 
         System.arraycopy(first, 0, result, 0, first.length);
@@ -211,35 +218,34 @@ public class Encoder {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2){
+        if (args.length < 2) {
             System.out.println("Wrong number of file path arguments");
         }
 
         String inPath = args[0];
         String outPath = args[1];
 
-        try {FileInputStream is = new FileInputStream(new File(inPath));
+        try {
+            FileInputStream is = new FileInputStream(new File(inPath));
             File outputFile = new File(outPath);
 
             outputFile.createNewFile();
             BufferedWriter os = new BufferedWriter(
                     new OutputStreamWriter(new FileOutputStream(outputFile, false), StandardCharsets.UTF_8));
 
-            //Java heap setup = 2048 MB
-
-            byte[] inputBuffer = new byte[40960];
+            byte[] inputBuffer = new byte[256000];
             int chunkLen;
             int chunk = 1;
 
             while ((chunkLen = is.read(inputBuffer)) != -1) {
                 System.out.println("Encoding chunk №" + chunk);
 
-                String text = new String(Arrays.copyOf(inputBuffer,chunkLen) , StandardCharsets.UTF_8);
+                String text = new String(Arrays.copyOf(inputBuffer, chunkLen), StandardCharsets.UTF_8);
 
                 String alphabet = getAlphabet(text);
                 BWTResult BWTResult = BWT(text);
 
-                int[] mtfResult = MTF(BWTResult.getResult(), alphabet);
+                int[] mtfResult = MTF(Objects.requireNonNull(BWTResult).getResult(), alphabet);
                 int[] mtfAppearances = countAppearancesOfAlphabetNumber(alphabet.length(), mtfResult);
 
                 Huffman huffman = new Huffman();
@@ -273,8 +279,8 @@ public class Encoder {
                 char[] byteEncoded = charArrayFromBit(encoded);
                 char[] byteHuffman = charArrayFromBit(huffStruct);
 
-                os.write(charOrder.length() + "," + byteEncoded.length + ","  + byteHuffman.length + "," +
-                        + seqOffset + "," + huffOffset + "," +  BWTResult.getPosition());
+                os.write(charOrder.length() + "," + byteEncoded.length + "," + byteHuffman.length + "," +
+                        +seqOffset + "," + huffOffset + "," + BWTResult.getPosition());
                 os.newLine();
                 os.write(charOrder);
                 os.write(byteHuffman);

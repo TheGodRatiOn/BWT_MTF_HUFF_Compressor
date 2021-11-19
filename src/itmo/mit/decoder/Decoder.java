@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Decoder {
-    private static String reverseMTF(int[] intArray, String alphabet){
+    private static String reverseMTF(int[] intArray, String alphabet) {
         StringBuilder sb = new StringBuilder();
 
         for (int value : intArray) {
@@ -21,7 +21,7 @@ public class Decoder {
         return sb.toString();
     }
 
-    private static String reverseBWT(String inputString, String alphabet,  int number){
+    private static String reverseBWT(String inputString, String alphabet, int number) {
         int[] count = getCharBorderPositions(inputString, alphabet);
         char[] chars = new char[inputString.length()];
 
@@ -46,16 +46,16 @@ public class Decoder {
         StringBuilder sb = new StringBuilder();
 
         for (int i = 0; i < inputString.length(); i++) {
-            sb.append(inputString.charAt(indexOfNumber)) ;
+            sb.append(inputString.charAt(indexOfNumber));
             indexOfNumber = getIndexOfNumber(count2, indexOfNumber);
         }
 
         return sb.toString();
     }
 
-    private static int getIndexOfNumber(int[] intArray, int number){
+    private static int getIndexOfNumber(int[] intArray, int number) {
         for (int i = 0; i < intArray.length; i++) {
-            if (intArray[i] == number){
+            if (intArray[i] == number) {
                 return i;
             }
         }
@@ -77,13 +77,13 @@ public class Decoder {
         return count;
     }
 
-    private static int[] getIntsFromString(String string){
+    private static int[] getIntsFromString(String string) {
         int[] indexes = new int[6];
         int[] result = new int[6];
         int j = 0;
 
         for (int i = 0; i < string.length(); i++) {
-            if (string.charAt(i) == ','){
+            if (string.charAt(i) == ',') {
                 indexes[j] = i;
                 j++;
             }
@@ -92,7 +92,7 @@ public class Decoder {
 
         j = 0;
         int i = 0;
-        while (i < string.length()){
+        while (i < string.length()) {
             result[j] = Integer.parseInt(string.substring(i, indexes[j]));
             i = indexes[j] + 1;
             j++;
@@ -101,24 +101,24 @@ public class Decoder {
         return result;
     }
 
-    private static String getSortedStringFromCharArray(char[] chars){
+    private static String getSortedStringFromCharArray(char[] chars) {
         List<Character> characters = new ArrayList<>();
 
-        for (char c: chars) {
+        for (char c : chars) {
             characters.add(c);
         }
 
         Collections.sort(characters);
 
         StringBuilder sb = new StringBuilder();
-        for (Character c: characters) {
+        for (Character c : characters) {
             sb.append(c);
         }
 
         return sb.toString();
     }
 
-    private static int[] getInsertionOrder(String original, String alphabet){
+    private static int[] getInsertionOrder(String original, String alphabet) {
         int[] result = new int[original.length()];
 
         for (int i = 0; i < original.length(); i++) {
@@ -128,7 +128,7 @@ public class Decoder {
         return result;
     }
 
-    private static boolean[] concatenateBoolArrays(boolean[] first, boolean[] second){
+    private static boolean[] concatenateBoolArrays(boolean[] first, boolean[] second) {
         boolean[] result = new boolean[first.length + second.length];
 
         System.arraycopy(first, 0, result, 0, first.length);
@@ -137,27 +137,27 @@ public class Decoder {
         return result;
     }
 
-    private static boolean[] bitOctetFromShort(short number){
-        if (number < 256){
+    private static boolean[] bitOctetFromShort(short number) {
+        if (number < 256) {
             boolean[] result = new boolean[8];
             int i = 0;
-            while (number > 0){
-                if (number % 2 == 1){
+            while (number > 0) {
+                if (number % 2 == 1) {
                     result[result.length - 1 - i] = true;
                 } else {
                     result[result.length - 1 - i] = false;
                 }
                 i++;
-                number = (short) (number>>1);
+                number = (short) (number >> 1);
             }
             return result;
 
-        }else {
+        } else {
             return null;
         }
     }
 
-    private static boolean[] getBitArrayCharArray(char[] chars){
+    private static boolean[] getBitArrayCharArray(char[] chars) {
         boolean[] result = new boolean[0];
 
         for (char a : chars) {
@@ -167,7 +167,7 @@ public class Decoder {
         return result;
     }
 
-    private static String getStringFromBitSequence(boolean[] booleans){
+    private static String getStringFromBitSequence(boolean[] booleans) {
         StringBuilder sb = new StringBuilder();
 
         for (boolean aBoolean : booleans) {
@@ -182,7 +182,7 @@ public class Decoder {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2){
+        if (args.length < 2) {
             System.out.println("Wrong number of file path arguments");
         }
 
@@ -198,10 +198,10 @@ public class Decoder {
 
             outputFile.createNewFile();
             BufferedWriter os = new BufferedWriter(new OutputStreamWriter(
-                            new FileOutputStream(outputFile, false), StandardCharsets.UTF_8));
+                    new FileOutputStream(outputFile, false), StandardCharsets.UTF_8));
 
             int chunkNumber = 1;
-            while (is.ready()){
+            while (is.ready()) {
                 String line = is.readLine();
                 System.out.println("Decoding chunk #" + chunkNumber);
 
@@ -229,7 +229,8 @@ public class Decoder {
                 huffman.generateAnotherHuffmanCode(root, "");
                 Map<Integer, String> resultCodes = huffman.getHuffmanCodes();
                 Map<String, Integer> reversedMap = new HashMap<>();
-                for (Map.Entry<Integer, String> codes: resultCodes.entrySet()) {
+
+                for (Map.Entry<Integer, String> codes : resultCodes.entrySet()) {
                     reversedMap.put(codes.getValue(), codes.getKey());
                 }
 
@@ -240,9 +241,9 @@ public class Decoder {
 
                 int j = 1;
                 int i = 0;
-                while (i < bitSequence.length){
+                while (i < bitSequence.length) {
                     final String mapKey = getStringFromBitSequence(Arrays.copyOfRange(bitSequence, i, i + j));
-                    if (reversedMap.containsKey(mapKey)){
+                    if (reversedMap.containsKey(mapKey)) {
                         valuesToMTF.add(reversedMap.get(mapKey));
                         i = i + j;
                         j = 1;
@@ -264,7 +265,7 @@ public class Decoder {
 
             is.close();
             os.close();
-        }catch (IOException e){
+        } catch (IOException e) {
             System.err.println("IO Exception");
             e.printStackTrace();
         }
