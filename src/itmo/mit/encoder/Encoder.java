@@ -6,7 +6,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static itmo.mit.encoder.BoundaryIndex.quickStringSort;
+import static itmo.mit.encoder.BoundaryIndex.mergeStringSort;
 
 
 public class Encoder {
@@ -20,7 +20,7 @@ public class Encoder {
                 boundaryIndices.add(new BoundaryIndex(i, i + inputString.length()));
             }
 
-            quickStringSort(boundaryIndices, doubleInput, 0, boundaryIndices.size() - 1);
+            mergeStringSort(boundaryIndices, doubleInput);
 
             int resultIndex = 0;
             for (int i = 0; i < boundaryIndices.size(); i++) {
