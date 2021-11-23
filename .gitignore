@@ -7,4 +7,6 @@
 #Folders
 /.idea
 /out/
+/Decoder
+/Encoder
 /calgarycorpus
