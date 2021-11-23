@@ -7,6 +7,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static itmo.mit.encoder.Encoder.getPowerOf2;
+
 public class Decoder {
     private static String reverseMTF(int[] intArray, String alphabet) {
         StringBuilder sb = new StringBuilder();
@@ -78,8 +80,8 @@ public class Decoder {
     }
 
     private static int[] getIntsFromString(String string) {
-        int[] indexes = new int[6];
-        int[] result = new int[6];
+        int[] indexes = new int[5];
+        int[] result = new int[5];
         int j = 0;
 
         for (int i = 0; i < string.length(); i++) {
@@ -88,12 +90,17 @@ public class Decoder {
                 j++;
             }
         }
-        indexes[5] = string.length();
+        indexes[4] = string.length();
 
         j = 0;
         int i = 0;
         while (i < string.length()) {
-            result[j] = Integer.parseInt(string.substring(i, indexes[j]));
+            if (j == 3) {
+                System.out.println(string.charAt(i));
+                result[j] = string.charAt(i);
+            } else {
+                result[j] = Integer.parseInt(string.substring(i, indexes[j]));
+            }
             i = indexes[j] + 1;
             j++;
         }
@@ -142,11 +149,7 @@ public class Decoder {
             boolean[] result = new boolean[8];
             int i = 0;
             while (number > 0) {
-                if (number % 2 == 1) {
-                    result[result.length - 1 - i] = true;
-                } else {
-                    result[result.length - 1 - i] = false;
-                }
+                result[result.length - 1 - i] = number % 2 == 1;
                 i++;
                 number = (short) (number >> 1);
             }
@@ -181,6 +184,27 @@ public class Decoder {
         return sb.toString();
     }
 
+    private static byte[] getOffsetsFromInt(int number) {
+        byte[] offsets = new byte[2];
+        boolean[] octet = bitOctetFromShort((short) number);
+
+        assert octet != null;
+
+        for (int i = 0; i < 3; i++) {
+            if (octet[i + 2]) {
+                offsets[0] += getPowerOf2(i);
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            if (octet[i + 5]) {
+                offsets[1] += getPowerOf2(i);
+            }
+        }
+
+        return offsets;
+    }
+
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Wrong number of file path arguments");
@@ -188,6 +212,7 @@ public class Decoder {
 
         String inPath = args[0];
         String outPath = args[1];
+
 
         try {
             BufferedReader is = new BufferedReader(new InputStreamReader(
@@ -203,13 +228,14 @@ public class Decoder {
             int chunkNumber = 1;
             while (is.ready()) {
                 String line = is.readLine();
-                System.out.println("Decoding chunk #" + chunkNumber);
+                System.out.println("Decoding chunk №" + chunkNumber);
 
                 int[] chunkConfig = getIntsFromString(line);
 
                 char[] alphabet = new char[chunkConfig[0]];
                 char[] charSequence = new char[chunkConfig[1]];
                 char[] huffStruct = new char[chunkConfig[2]];
+                byte[] offsets = getOffsetsFromInt(chunkConfig[3]);
 
                 is.read(alphabet);
                 is.read(huffStruct);
@@ -220,7 +246,7 @@ public class Decoder {
                 int[] order = getInsertionOrder(originalAlphabet, sortedAlphabet);
 
                 boolean[] huffBitStruct = getBitArrayCharArray(huffStruct);
-                huffBitStruct = Arrays.copyOf(huffBitStruct, huffBitStruct.length - chunkConfig[4]);
+                huffBitStruct = Arrays.copyOf(huffBitStruct, huffBitStruct.length - offsets[0]);
 
                 Huffman huffman = new Huffman(huffBitStruct, order);
                 HuffmanNode root = new HuffmanNode(-1);
@@ -235,7 +261,7 @@ public class Decoder {
                 }
 
                 boolean[] bitSequence = getBitArrayCharArray(charSequence);
-                bitSequence = Arrays.copyOf(bitSequence, bitSequence.length - chunkConfig[3]);
+                bitSequence = Arrays.copyOf(bitSequence, bitSequence.length - offsets[1]);
 
                 List<Integer> valuesToMTF = new ArrayList<>();
 
@@ -258,7 +284,7 @@ public class Decoder {
                     ints[k] = valuesToMTF.get(k);
                 }
 
-                String result = reverseBWT(reverseMTF(ints, sortedAlphabet), sortedAlphabet, chunkConfig[5]);
+                String result = reverseBWT(reverseMTF(ints, sortedAlphabet), sortedAlphabet, chunkConfig[4]);
                 os.write(result);
                 chunkNumber++;
             }

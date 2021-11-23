@@ -6,38 +6,84 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static itmo.mit.encoder.BoundaryIndex.mergeStringSort;
-
-
 public class Encoder {
+    private static void mergeStringList(int[] list, String string, int begin, int middle, int end) {
+        final int len1 = middle - begin;
+        final int len2 = end - middle;
+
+        int[] left = new int[len1];
+        int[] right = new int[len2];
+
+        if (len1 >= 0) System.arraycopy(list, begin, left, 0, len1);
+        if (len2 >= 0) System.arraycopy(list, middle, right, 0, len2);
+
+        int i = 0;
+        int j = 0;
+        int k = begin;
+
+        while (i < len1 && j < len2) {
+            if ((getCycledStringFromPos(string, left[i]))
+                    .compareTo(getCycledStringFromPos(string, right[j])) <= 0) {
+                list[k] = left[i];
+                i++;
+            } else {
+                list[k] = right[j];
+                j++;
+            }
+            k++;
+        }
+
+        while (i < len1) {
+            list[k] = left[i];
+            k++;
+            i++;
+        }
+
+        while (j < len2) {
+            list[k] = right[j];
+            k++;
+            j++;
+        }
+    }
+
+    public static void mergeStringSort(int[] list, String string) {
+        for (int i = 1; i < list.length; i *= 2) {
+            for (int j = 0; j < list.length - i; j += 2 * i) {
+                mergeStringList(list, string, j, j + i, Math.min(j + (2 * i), list.length));
+            }
+        }
+    }
+
+    private static String getCycledStringFromPos(String string, int pos) {
+        return string.substring(pos) + string.substring(0, pos);
+    }
+
     private static BWTResult BWT(String inputString) {
         if (!inputString.isEmpty()) {
-            String doubleInput = inputString.concat(inputString);
-            String result;
-            List<BoundaryIndex> boundaryIndices = new ArrayList<>();
+            int[] stringPosShifts = new int[inputString.length()];
 
-            for (int i = 0; i < inputString.length(); i++) {
-                boundaryIndices.add(new BoundaryIndex(i, i + inputString.length()));
+            for (int i = 0; i < stringPosShifts.length; i++) {
+                stringPosShifts[i] = i;
             }
 
-            mergeStringSort(boundaryIndices, doubleInput);
+            mergeStringSort(stringPosShifts, inputString);
 
             int resultIndex = 0;
-            for (int i = 0; i < boundaryIndices.size(); i++) {
-                if (doubleInput.substring(boundaryIndices.get(i).getBegin(),
-                        boundaryIndices.get(i).getEnd()).equals(inputString)) {
+            for (int i = 0; i < inputString.length(); i++) {
+                if (getCycledStringFromPos(inputString, stringPosShifts[i]).equals(inputString)) {
                     resultIndex = i;
                     break;
                 }
             }
 
-            StringBuilder stringBuilder = new StringBuilder();
-            for (BoundaryIndex b : boundaryIndices) {
-                stringBuilder.append(doubleInput.charAt(b.getEnd() - 1));
-            }
-            result = stringBuilder.toString();
+            StringBuilder sb = new StringBuilder();
 
-            return new BWTResult(result, resultIndex);
+            for (int stringPosShift : stringPosShifts) {
+                sb.append(getCycledStringFromPos(inputString, stringPosShift)
+                        .charAt(inputString.length() - 1));
+            }
+
+            return new BWTResult(sb.toString(), resultIndex);
         }
         return null;
     }
@@ -217,6 +263,15 @@ public class Encoder {
         return seqOffset;
     }
 
+    private static char getCharFromOffsets(byte sOff, byte hOff) {
+        int sum = 0;
+        sum += sOff;
+        sum = sum << 3;
+        sum += hOff;
+
+        return (char) sum;
+    }
+
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Wrong number of file path arguments");
@@ -278,9 +333,10 @@ public class Encoder {
 
                 char[] byteEncoded = charArrayFromBit(encoded);
                 char[] byteHuffman = charArrayFromBit(huffStruct);
+                char offsets = getCharFromOffsets(seqOffset, huffOffset);
 
-                os.write(charOrder.length() + "," + byteEncoded.length + "," + byteHuffman.length + "," +
-                        +seqOffset + "," + huffOffset + "," + BWTResult.getPosition());
+                os.write(charOrder.length() + "," + byteEncoded.length + "," + byteHuffman.length
+                        + "," + offsets + "," + BWTResult.getPosition());
                 os.newLine();
                 os.write(charOrder);
                 os.write(byteHuffman);
