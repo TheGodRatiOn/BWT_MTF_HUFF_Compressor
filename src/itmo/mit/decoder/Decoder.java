@@ -216,8 +216,7 @@ public class Decoder {
 
         try {
             BufferedReader is = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(
-                            new File(inPath)), StandardCharsets.UTF_8));
+                    new FileInputStream(inPath), StandardCharsets.UTF_8));
 
             File outputFile = new File(outPath);
 

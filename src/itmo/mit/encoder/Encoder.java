@@ -14,8 +14,8 @@ public class Encoder {
         int[] left = new int[len1];
         int[] right = new int[len2];
 
-        if (len1 >= 0) System.arraycopy(list, begin, left, 0, len1);
-        if (len2 >= 0) System.arraycopy(list, middle, right, 0, len2);
+        System.arraycopy(list, begin, left, 0, len1);
+        System.arraycopy(list, middle, right, 0, len2);
 
         int i = 0;
         int j = 0;
@@ -160,8 +160,8 @@ public class Encoder {
 
         for (int value : inputSequence) {
             final long Range = high - low + 1;
-            high = low + Math.round(Math.floor(Range * cumulativeApps[value + 1] * cumulativeApps[cumulativeApps.length - 1] / (inputSize * inputSize)) - 1);
-            low = low + Math.round(Math.floor(Range * cumulativeApps[value] * cumulativeApps[cumulativeApps.length - 1] / (inputSize * inputSize)));
+            high = low + Math.round(Math.floor(Range * cumulativeApps[value + 1] * cumulativeApps[cumulativeApps.length - 1] / ((long) inputSize * inputSize)) - 1);
+            low = low + Math.round(Math.floor(Range * cumulativeApps[value] * cumulativeApps[cumulativeApps.length - 1] / ((long) inputSize * inputSize)));
 
             while (true) {
                 if (high < R2) {
@@ -281,7 +281,7 @@ public class Encoder {
         String outPath = args[1];
 
         try {
-            FileInputStream is = new FileInputStream(new File(inPath));
+            FileInputStream is = new FileInputStream(inPath);
             File outputFile = new File(outPath);
 
             outputFile.createNewFile();
